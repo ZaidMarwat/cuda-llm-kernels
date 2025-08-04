@@ -15,3 +15,14 @@ make bench                    # GFLOP/s table for the CPU ladder
 make roofline-host HOST_KEY=host-m1 HOST_NAME="Apple M1, 4 P-cores (measured)"
 make report                   # roofline bounds for decode-path shapes on each device
 ```
+
+## CUDA kernels (UNRUN: no NVIDIA GPU on the development machine)
+
+`cuda/sgemm.cu` has four SGEMM kernels (naive, coalesced, shared-memory tiled,
+register-tiled). `cuda/test_sgemm.cu` checks each one against the CPU reference.
+They have been type-checked with clang's CUDA front end (`make cuda-syntax`), but
+**not yet compiled with nvcc or run on a GPU**. To run them on a machine with CUDA:
+
+```bash
+make cuda-test            # builds with nvcc -arch=native, runs the correctness checks
+```

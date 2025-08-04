@@ -12,7 +12,7 @@ BUILD    := build
 PYTHON   ?= python3
 THREADS  ?= 4
 
-.PHONY: all test bench microbench roofline-host report clean
+.PHONY: all test bench microbench roofline-host report cuda cuda-test cuda-syntax clean
 all: $(BUILD)/test_ref $(BUILD)/test_cpu_gemm $(BUILD)/bench_cpu_gemm $(BUILD)/microbench
 
 $(BUILD)/test_ref: tests/test_ref.cpp src/ref.cpp include/ck/ref.h tests/check.h | $(BUILD)
@@ -50,6 +50,33 @@ roofline-host: $(BUILD)/microbench
 
 report:
 	$(PYTHON) -m roofline.report
+
+# ---- CUDA (needs nvcc and an NVIDIA GPU) ----------------------------------------------
+NVCC      ?= nvcc
+CUDA_ARCH ?= native
+NVCCFLAGS ?= -O3 -std=c++17 -arch=$(CUDA_ARCH) -lineinfo -Iinclude
+CUDA_LIB  := cuda/sgemm.cu
+CUDA_HDRS := $(wildcard cuda/*.cuh) include/ck/ref.h tests/check.h
+
+cuda: $(BUILD)/test_sgemm
+
+$(BUILD)/test_sgemm: cuda/test_sgemm.cu $(CUDA_LIB) src/ref.cpp $(CUDA_HDRS) | $(BUILD)
+	$(NVCC) $(NVCCFLAGS) cuda/test_sgemm.cu $(CUDA_LIB) src/ref.cpp -o $@
+
+cuda-test: cuda
+	./$(BUILD)/test_sgemm
+
+# Static check of every .cu file with clang's CUDA front end and a stub runtime header
+# (force-included first, because clang's CUDA std wrappers need __host__ defined).
+# Works without the CUDA toolkit. It catches syntax and type errors only; it does not
+# generate GPU code and proves nothing about correctness or speed.
+CLANG ?= clang++
+cuda-syntax:
+	@for f in cuda/*.cu; do \
+	  echo "clang -fsyntax-only $$f"; \
+	  $(CLANG) -x cuda --cuda-gpu-arch=sm_80 -nocudainc -nocudalib -std=c++17 \
+	    -Iinclude -Itools/cuda_syntax -include cuda_runtime.h -fsyntax-only $$f || exit 1; \
+	done
 
 clean:
 	rm -rf $(BUILD)
