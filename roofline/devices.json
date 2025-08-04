@@ -1,0 +1,33 @@
+{
+  "_note": "GPU entries are vendor datasheet peaks (dense FP32, no tensor cores), not measurements. Host CPU entries are written by `make roofline-host` from bench/microbench measurements.",
+  "t4": {
+    "name": "NVIDIA T4",
+    "peak_gflops": 8100,
+    "bw_gbs": 320,
+    "source": "NVIDIA T4 Tensor Core GPU datasheet: 8.1 TFLOPS FP32, 320 GB/s GDDR6"
+  },
+  "l4": {
+    "name": "NVIDIA L4",
+    "peak_gflops": 30300,
+    "bw_gbs": 300,
+    "source": "NVIDIA L4 Tensor Core GPU datasheet: 30.3 TFLOPS FP32, 300 GB/s"
+  },
+  "a100-40gb": {
+    "name": "NVIDIA A100 40GB SXM",
+    "peak_gflops": 19500,
+    "bw_gbs": 1555,
+    "source": "NVIDIA A100 datasheet: 19.5 TFLOPS FP32, 1,555 GB/s HBM2"
+  },
+  "rtx4090": {
+    "name": "NVIDIA GeForce RTX 4090",
+    "peak_gflops": 82600,
+    "bw_gbs": 1008,
+    "source": "NVIDIA Ada GPU architecture whitepaper: 82.6 TFLOPS FP32, 1,008 GB/s GDDR6X"
+  },
+  "host-m1": {
+    "name": "Apple M1, 4 P-cores (measured)",
+    "peak_gflops": 379.2,
+    "bw_gbs": 57.8,
+    "source": "measured by bench/microbench (4 threads), see results/host-m1_microbench.txt"
+  }
+}
