@@ -18,8 +18,12 @@ make report                   # roofline bounds for decode-path shapes on each d
 
 ## CUDA kernels (UNRUN: no NVIDIA GPU on the development machine)
 
-`cuda/sgemm.cu` has four SGEMM kernels (naive, coalesced, shared-memory tiled,
-register-tiled). `cuda/test_sgemm.cu` checks each one against the CPU reference.
+- `cuda/sgemm.cu`: four SGEMM kernels (naive, coalesced, shared-memory tiled,
+  register-tiled). `cuda/test_sgemm.cu` checks each one against the CPU reference.
+- `cuda/rowops.cu`: a naive softmax baseline, a warp-per-row online softmax, and a
+  warp-per-row Welford LayerNorm. `cuda/test_rowops.cu` checks them. The per-lane math is in
+  `cuda/rowops_math.h`, and `tests/test_rowops_math.cpp` runs it on the CPU through a
+  32-lane butterfly emulation, so the algorithm itself is tested here even without a GPU.
 They have been type-checked with clang's CUDA front end (`make cuda-syntax`), but
 **not yet compiled with nvcc or run on a GPU**. To run them on a machine with CUDA:
 
