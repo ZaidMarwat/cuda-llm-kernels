@@ -5,13 +5,7 @@
 #pragma once
 #include <cmath>
 
-// nvcc defines __CUDACC__; clang in CUDA mode defines __CUDA__ (and __CUDACC__ only via the
-// real CUDA headers). Checking both makes the file work with either compiler.
-#if defined(__CUDACC__) || defined(__CUDA__)
-#define CK_HD __host__ __device__ __forceinline__
-#else
-#define CK_HD inline
-#endif
+#include "hd.h"
 
 namespace ck {
 

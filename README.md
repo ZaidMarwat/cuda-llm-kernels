@@ -24,6 +24,10 @@ make report                   # roofline bounds for decode-path shapes on each d
   warp-per-row Welford LayerNorm. `cuda/test_rowops.cu` checks them. The per-lane math is in
   `cuda/rowops_math.h`, and `tests/test_rowops_math.cpp` runs it on the CPU through a
   32-lane butterfly emulation, so the algorithm itself is tested here even without a GPU.
+- `cuda/attention.cu`: split-KV decode attention (FlashDecoding-style). `H x splits` blocks
+  each produce a partial softmax state `(m, l, acc)` over a chunk of the KV cache, and a
+  second kernel merges them. `tests/test_attention_math.cpp` emulates the same split, warp
+  and merge structure on the CPU. `cuda/test_attention.cu` checks the GPU version.
 They have been type-checked with clang's CUDA front end (`make cuda-syntax`), but
 **not yet compiled with nvcc or run on a GPU**. To run them on a machine with CUDA:
 

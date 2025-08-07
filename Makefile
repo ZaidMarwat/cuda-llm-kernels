@@ -13,13 +13,16 @@ PYTHON   ?= python3
 THREADS  ?= 4
 
 .PHONY: all test bench microbench roofline-host report cuda cuda-test cuda-syntax clean
-all: $(BUILD)/test_ref $(BUILD)/test_rowops_math $(BUILD)/test_cpu_gemm $(BUILD)/bench_cpu_gemm $(BUILD)/microbench
+all: $(BUILD)/test_ref $(BUILD)/test_rowops_math $(BUILD)/test_attention_math $(BUILD)/test_cpu_gemm $(BUILD)/bench_cpu_gemm $(BUILD)/microbench
 
 $(BUILD)/test_ref: tests/test_ref.cpp src/ref.cpp include/ck/ref.h tests/check.h | $(BUILD)
 	$(CXX) $(CXXFLAGS) tests/test_ref.cpp src/ref.cpp -o $@
 
-$(BUILD)/test_rowops_math: tests/test_rowops_math.cpp cuda/rowops_math.h src/ref.cpp include/ck/ref.h tests/check.h | $(BUILD)
+$(BUILD)/test_rowops_math: tests/test_rowops_math.cpp cuda/rowops_math.h cuda/hd.h src/ref.cpp include/ck/ref.h tests/check.h | $(BUILD)
 	$(CXX) $(CXXFLAGS) tests/test_rowops_math.cpp src/ref.cpp -o $@
+
+$(BUILD)/test_attention_math: tests/test_attention_math.cpp cuda/attention_math.h cuda/hd.h src/ref.cpp include/ck/ref.h tests/check.h | $(BUILD)
+	$(CXX) $(CXXFLAGS) tests/test_attention_math.cpp src/ref.cpp -o $@
 
 $(BUILD)/test_cpu_gemm: tests/test_cpu_gemm.cpp src/cpu_gemm.cpp src/ref.cpp include/ck/*.h tests/check.h | $(BUILD)
 	$(CXX) $(CXXFLAGS) $(FAST) tests/test_cpu_gemm.cpp src/cpu_gemm.cpp src/ref.cpp -o $@ -lpthread
@@ -33,9 +36,10 @@ $(BUILD)/microbench: bench/microbench.cpp | $(BUILD)
 $(BUILD):
 	mkdir -p $@
 
-test: $(BUILD)/test_ref $(BUILD)/test_rowops_math $(BUILD)/test_cpu_gemm
+test: $(BUILD)/test_ref $(BUILD)/test_rowops_math $(BUILD)/test_attention_math $(BUILD)/test_cpu_gemm
 	./$(BUILD)/test_ref
 	./$(BUILD)/test_rowops_math
+	./$(BUILD)/test_attention_math
 	./$(BUILD)/test_cpu_gemm
 	$(PYTHON) -m unittest discover -s tests -p 'test_*.py'
 
@@ -59,10 +63,10 @@ report:
 NVCC      ?= nvcc
 CUDA_ARCH ?= native
 NVCCFLAGS ?= -O3 -std=c++17 -arch=$(CUDA_ARCH) -lineinfo -Iinclude
-CUDA_LIB  := cuda/sgemm.cu cuda/rowops.cu
+CUDA_LIB  := cuda/sgemm.cu cuda/rowops.cu cuda/attention.cu
 CUDA_HDRS := $(wildcard cuda/*.cuh cuda/*.h) include/ck/ref.h tests/check.h
 
-cuda: $(BUILD)/test_sgemm $(BUILD)/test_rowops
+cuda: $(BUILD)/test_sgemm $(BUILD)/test_rowops $(BUILD)/test_attention
 
 $(BUILD)/test_sgemm: cuda/test_sgemm.cu $(CUDA_LIB) src/ref.cpp $(CUDA_HDRS) | $(BUILD)
 	$(NVCC) $(NVCCFLAGS) cuda/test_sgemm.cu $(CUDA_LIB) src/ref.cpp -o $@
@@ -70,9 +74,13 @@ $(BUILD)/test_sgemm: cuda/test_sgemm.cu $(CUDA_LIB) src/ref.cpp $(CUDA_HDRS) | $
 $(BUILD)/test_rowops: cuda/test_rowops.cu $(CUDA_LIB) src/ref.cpp $(CUDA_HDRS) | $(BUILD)
 	$(NVCC) $(NVCCFLAGS) cuda/test_rowops.cu $(CUDA_LIB) src/ref.cpp -o $@
 
+$(BUILD)/test_attention: cuda/test_attention.cu $(CUDA_LIB) src/ref.cpp $(CUDA_HDRS) | $(BUILD)
+	$(NVCC) $(NVCCFLAGS) cuda/test_attention.cu $(CUDA_LIB) src/ref.cpp -o $@
+
 cuda-test: cuda
 	./$(BUILD)/test_sgemm
 	./$(BUILD)/test_rowops
+	./$(BUILD)/test_attention
 
 # Static check of every .cu file with clang's CUDA front end and a stub runtime header
 # (force-included first, because clang's CUDA std wrappers need __host__ defined).
