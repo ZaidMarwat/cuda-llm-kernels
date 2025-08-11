@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  cpu-tests:
+    # Reference ops, CPU GEMM ladder, CPU emulation of the warp/split-KV math, Python roofline.
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test
+        run: make test
+
+  cuda-syntax:
+    # Type-checks every .cu file with clang's CUDA front end and the stub headers in
+    # tools/cuda_syntax. Needs no CUDA toolkit.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install clang
+        run: sudo apt-get update && sudo apt-get install -y clang
+      - name: clang -fsyntax-only on cuda/*.cu
+        run: make cuda-syntax CLANG=clang++
+
+  cuda-compile:
+    # Compiles the CUDA kernels, tests and benchmark with nvcc. GitHub-hosted runners have no
+    # GPU, so nothing is executed here; correctness and speed must be checked on real hardware
+    # with `make cuda-test` and `make cuda-bench`.
+    runs-on: ubuntu-latest
+    container: nvidia/cuda:12.4.1-devel-ubuntu22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install make
+        run: apt-get update && apt-get install -y make
+      - name: nvcc build for sm_75 (T4) and sm_86
+        run: |
+          make cuda build/bench_gpu CUDA_ARCH=sm_75
+          make clean
+          make cuda build/bench_gpu CUDA_ARCH=sm_86
