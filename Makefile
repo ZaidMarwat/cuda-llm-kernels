@@ -12,7 +12,7 @@ BUILD    := build
 PYTHON   ?= python3
 THREADS  ?= 4
 
-.PHONY: all test bench microbench roofline-host report cuda cuda-test cuda-syntax clean
+.PHONY: all test bench microbench roofline-host report cuda cuda-test cuda-bench cuda-syntax clean
 all: $(BUILD)/test_ref $(BUILD)/test_rowops_math $(BUILD)/test_attention_math $(BUILD)/test_cpu_gemm $(BUILD)/bench_cpu_gemm $(BUILD)/microbench
 
 $(BUILD)/test_ref: tests/test_ref.cpp src/ref.cpp include/ck/ref.h tests/check.h | $(BUILD)
@@ -76,6 +76,13 @@ $(BUILD)/test_rowops: cuda/test_rowops.cu $(CUDA_LIB) src/ref.cpp $(CUDA_HDRS) |
 
 $(BUILD)/test_attention: cuda/test_attention.cu $(CUDA_LIB) src/ref.cpp $(CUDA_HDRS) | $(BUILD)
 	$(NVCC) $(NVCCFLAGS) cuda/test_attention.cu $(CUDA_LIB) src/ref.cpp -o $@
+
+$(BUILD)/bench_gpu: cuda/bench_gpu.cu $(CUDA_LIB) $(CUDA_HDRS) | $(BUILD)
+	$(NVCC) $(NVCCFLAGS) cuda/bench_gpu.cu $(CUDA_LIB) -o $@ -lcublas
+
+# CSV to stdout: make -s cuda-bench > results/gpu_<name>.csv
+cuda-bench: $(BUILD)/bench_gpu
+	@./$(BUILD)/bench_gpu
 
 cuda-test: cuda
 	./$(BUILD)/test_sgemm

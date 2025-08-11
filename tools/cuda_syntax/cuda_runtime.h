@@ -39,6 +39,8 @@ cudaError_t cudaDeviceSynchronize();
 cudaError_t cudaGetLastError();
 const char* cudaGetErrorString(cudaError_t);
 cudaError_t cudaGetDeviceProperties(cudaDeviceProp*, int);
+enum cudaDeviceAttr { cudaDevAttrL2CacheSize = 89 };
+cudaError_t cudaDeviceGetAttribute(int*, cudaDeviceAttr, int);
 cudaError_t cudaEventCreate(cudaEvent_t*);
 cudaError_t cudaEventDestroy(cudaEvent_t);
 cudaError_t cudaEventRecord(cudaEvent_t, cudaStream_t = nullptr);

@@ -32,5 +32,9 @@ They have been type-checked with clang's CUDA front end (`make cuda-syntax`), bu
 **not yet compiled with nvcc or run on a GPU**. To run them on a machine with CUDA:
 
 ```bash
-make cuda-test            # builds with nvcc -arch=native, runs the correctness checks
+make cuda-test                                   # nvcc -arch=native, then all correctness checks
+make -s cuda-bench > results/gpu_t4.csv          # median of 21 L2-flushed launches per kernel
+python3 -m roofline.gpu_report results/gpu_t4.csv --device t4
 ```
+
+See `results/GPU_RESULTS_PLACEHOLDER.md`. No GPU numbers have been measured yet.

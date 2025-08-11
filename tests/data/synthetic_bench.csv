@@ -1,0 +1,4 @@
+device,kernel,variant,p1,p2,p3,p4,median_us
+SYNTHETIC TEST FIXTURE (not a measurement),sgemm,regtile,1000,1000,1000,0,1000.0
+SYNTHETIC TEST FIXTURE (not a measurement),softmax,warp_online,1000,1000,0,0,80.0
+SYNTHETIC TEST FIXTURE (not a measurement),attention_decode,split_kv,1000,10,100,8,32.0
